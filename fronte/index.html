@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NSS Donation System</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <style>
+    * {
+        box-sizing: border-box;
+    }
+    body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: linear-gradient(135deg, #e3f2fd, #f9f9f9);
+        min-height: 100vh;
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .container {
+        width: 100%;
+        max-width: 420px;
+        padding: 20px;
+    }
+
+    h1 {
+        text-align: center;
+        margin-bottom: 25px;
+        color: #1a237e;
+    }
+
+    .box {
+        background: #ffffff;
+        padding: 25px;
+        margin-bottom: 20px;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        animation: fadeIn 0.4s ease;
+    }
+
+    h3 {
+        margin-top: 0;
+        color: #0d47a1;
+        text-align: center;
+    }
+
+    input {
+        width: 100%;
+        padding: 10px;
+        margin-top: 10px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+    }
+
+    button {
+        width: 100%;
+        padding: 10px;
+        margin-top: 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 15px;
+        cursor: pointer;
+        background: #1976d2;
+        color: #fff;
+        transition: background 0.3s ease, transform 0.1s ease;
+    }
+
+    button:hover {
+        background: #0d47a1;
+        transform: translateY(-1px);
+    }
+
+    button.secondary {
+        background: #e0e0e0;
+        color: #333;
+    }
+
+    button.secondary:hover {
+        background: #bdbdbd;
+    }
+
+    .success {
+        color: #2e7d32;
+        font-weight: 600;
+        margin-top: 10px;
+        text-align: center;
+    }
+
+    .failed {
+        color: #c62828;
+        font-weight: 600;
+        margin-top: 10px;
+        text-align: center;
+    }
+
+    .pending {
+        color: #ef6c00;
+        font-weight: 600;
+        text-align: center;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        font-size: 14px;
+    }
+
+    th, td {
+        padding: 8px;
+        text-align: center;
+        border-bottom: 1px solid #ddd;
+    }
+
+    th {
+        background: #e3f2fd;
+        color: #0d47a1;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+</head>
+
+<body>
+<div class="container">
+<h1>NSS Registration & Donation</h1>
+
+<!-- CHOOSE OPTION -->
+
+
+<!-- REGISTER -->
+<div class="box hidden" id="registerBox">
+    <h3>📝 Register</h3>
+    <input id="regName" placeholder="Name"><br>
+    <input id="regEmail" placeholder="Email"><br>
+    <input id="regPassword" type="password" placeholder="Password">
+
+    <button type="button" onclick="registerUser()">Register</button>
+    <button type="button" class="secondary" onclick="goBack()">⬅ Back</button>
+
+
+    <p id="registerMsg"></p>
+</div>
+
+<div class="box" id="choiceBox">
+    <h3>Choose an option</h3>
+    <button type="button" onclick="showLogin()">Login</button>
+    <button type="button" onclick="showRegister()">Register</button>
+</div>
+
+
+<!-- LOGIN -->
+<div class="box hidden" id="loginBox">
+    <h3>🔐 Login</h3>
+    <input id="loginEmail" placeholder="Email"><br>
+    <input id="loginPassword" type="password" placeholder="Password"><br>
+
+    <button type="button" onclick="login()">Login</button>
+    <button type="button" class="secondary" onclick="goBack()">⬅ Back</button>
+
+
+    <p id="loginMsg"></p>
+</div>
+
+
+
+<!-- DONATE -->
+<div class="box hidden" id="donateBox">
+    <h3>💰 Donate</h3>
+    <input id="amount" type="number" placeholder="Donation Amount"><br>
+    <button type="button" onclick="donate()">Donate</button>
+    <p id="donationMsg"></p>
+</div>
+
+<!-- PAYMENT -->
+<div class="box hidden" id="paymentBox">
+    <h3>💳 Razorpay Payment (Test Mode)</h3>
+    <button onclick="payWithRazorpay()">Pay Now</button>
+    <p id="paymentMsg"></p>
+</div>
+
+<div class="box hidden" id="actionBox">
+    <h3>Choose Action</h3>
+    <button type="button" onclick="showDonate()">💰 Donate</button>
+    <button type="button" onclick="loadDonationHistory()">📜 View History</button>
+</div>
+
+<div class="box hidden" id="historyBox">
+    <h3>📜 My Donation History</h3>
+    <table border="1" cellpadding="8" cellspacing="0" width="100%">
+        <thead>
+            <tr>
+                <th>Donation ID</th>
+                <th>Amount (₹)</th>
+                <th>Status</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody id="historyTableBody"></tbody>
+    </table>
+</div>
+<div class="box hidden" id="adminSummaryBox">
+    <h3>📊 Admin Summary</h3>
+    <button type="button" onclick="loadUsers()">👥 View Registered Users</button>
+    <button onclick="window.open('http://127.0.0.1:8000/api/admin/export/users/')">
+        Download Users CSV
+    </button>
+    
+    <button type="button" onclick="loadAllDonations()">
+    📄 View All Donations
+</button>
+<button onclick="window.open('http://127.0.0.1:8000/api/admin/export/donations/')">
+    Download Donations CSV
+</button>
+
+<div class="hidden" id="adminDonationBox">
+    <h3>💰 Donation Details</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Email</th>
+                <th>Amount (₹)</th>
+                <th>Status</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody id="adminDonationTable"></tbody>
+    </table>
+</div>
+
+<div class="hidden" id="adminUsersBox">
+    <h3>👥 Registered Users</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody id="adminUsersTable"></tbody>
+    </table>
+</div>
+
+    <p id="adminSummaryText"></p>
+</div>
+
+<script>
+let userId = null;
+let donationId = null;
+
+// SHOW / HIDE
+function showRegister() {
+    document.getElementById("registerBox").classList.remove("hidden");
+    document.getElementById("loginBox").classList.add("hidden");
+}
+
+function showLogin() {
+    document.getElementById("loginBox").classList.remove("hidden");
+    document.getElementById("registerBox").classList.add("hidden");
+}
+
+// REGISTER
+function registerUser() {
+    fetch("http://127.0.0.1:8000/api/register/", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            name: regName.value,
+            email: regEmail.value,
+            password: regPassword.value
+        })
+    })
+    .then(async res => {
+        const data = await res.json();
+        if (!res.ok) throw data;
+        return data;
+    })
+    .then(data => {
+        document.getElementById("registerMsg").innerHTML =
+            `<span class="success">${data.message}. You can login now.</span>`;
+    })
+    .catch(err => {
+        document.getElementById("registerMsg").innerHTML =
+            `<span class="failed">${err.error}</span>`;
+    });
+}
+
+// LOGIN
+function login() {
+    fetch("http://127.0.0.1:8000/api/login/", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            email: document.getElementById("loginEmail").value,
+            password: document.getElementById("loginPassword").value
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        if (data.role === "admin") {
+            document.getElementById("loginMsg").innerHTML =
+                "<span class='success'>Admin logged in</span>";
+
+            hideUserUI();
+            loadAdminSummary();   //  ADMIN REDIRECT
+        }
+
+        else if (data.role === "user") {
+            userId = data.user_id;
+
+            document.getElementById("loginMsg").innerHTML =
+                `<span class='success'>Welcome ${data.name}</span>`;
+
+            document.getElementById("actionBox").classList.remove("hidden"); //  USER REDIRECT
+        }
+
+        else {
+            document.getElementById("loginMsg").innerHTML =
+                `<span class='failed'>${data.error}</span>`;
+        }
+    });
+}
+function hideUserUI() {
+    ["donateBox","paymentBox","actionBox","historyBox","registerBox"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add("hidden");
+    });
+}
+
+// DONATE
+function donate() {
+    console.log("donate func is called");
+
+    const amount = document.getElementById("amount").value;
+
+    if (!userId) {
+        alert("Please login first");
+        return;
+    }
+
+    if (!amount || amount <= 0) {
+        alert("Enter valid amount");
+        return;
+    }
+
+    fetch("http://127.0.0.1:8000/api/donate/", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            user_id: userId,
+            amount: amount
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        donationId = data.donation_id;
+
+        document.getElementById("donationMsg").innerText =
+            "Donation created (ID: " + donationId + ")";
+
+        document.getElementById("paymentBox").classList.remove("hidden");
+    })
+    .catch(err => {
+        console.error(err);
+    });
+}
+
+// PAYMENT
+function updatePayment(status) {
+    fetch("http://127.0.0.1:8000/api/payment/update/", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            donation_id: donationId,
+            status: status
+        })
+    })
+    .then(res => res.json())
+    .then(() => {
+        document.getElementById("paymentMsg").innerHTML =
+            status === "SUCCESS"
+            ? `<span class="success">Payment Successful</span>`
+            : `<span class="failed">Payment Failed</span>`;
+    });
+}
+function loadDonationHistory() {
+    fetch(`http://127.0.0.1:8000/api/donations/${userId}/`)
+    .then(res => res.json())
+    .then(data => {
+        const tbody = document.getElementById("historyTableBody");
+        tbody.innerHTML = "";
+
+        if (data.donations.length === 0) {
+            tbody.innerHTML =
+                `<tr><td colspan="4">No donations yet</td></tr>`;
+        }
+
+        data.donations.forEach(d => {
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+                <td>${d.donation_id}</td>
+                <td>${d.amount}</td>
+                <td>${d.status}</td>
+                <td>${d.date}</td>
+            `;
+
+            tbody.appendChild(row);
+        });
+
+        // Show history, hide donate/payment
+        document.getElementById("historyBox").classList.remove("hidden");
+        document.getElementById("donateBox").classList.add("hidden");
+        document.getElementById("paymentBox").classList.add("hidden");
+    });
+}
+function showDonate() {
+    document.getElementById("donateBox").classList.remove("hidden");
+    document.getElementById("historyBox").classList.add("hidden");
+}
+function loadAdminSummary() {
+    fetch("http://127.0.0.1:8000/api/admin/summary/")
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById("adminSummaryText").innerHTML = `
+            <b>Total Users:</b> ${data.total_users}<br>
+            <b>Total Donations:</b> ${data.total_donations}<br>
+            <b>Total Amount Collected:</b> ₹${data.total_amount_collected}<br><br>
+            <b>Successful:</b> ${data.donations.success}<br>
+            <b>Failed:</b> ${data.donations.failed}<br>
+            <b>Pending:</b> ${data.donations.pending}
+        `;
+
+        document.getElementById("adminSummaryBox").classList.remove("hidden");
+    });
+}
+function hideAllUserUI() {
+    [
+        "registerBox",
+        "donateBox",
+        "paymentBox",
+        "actionBox",
+        "historyBox"
+    ].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add("hidden");
+    });
+}
+
+function showLogin() {
+    document.getElementById("choiceBox").classList.add("hidden");
+    document.getElementById("loginBox").classList.remove("hidden");
+}
+
+function showRegister() {
+    document.getElementById("choiceBox").classList.add("hidden");
+    document.getElementById("registerBox").classList.remove("hidden");
+}
+function goBack() {
+    //  Hide ALL sections
+    [
+        "loginBox",
+        "registerBox",
+        "donateBox",
+        "paymentBox",
+        "actionBox",
+        "historyBox",
+        "adminSummaryBox",
+        "adminUsersBox",
+        "adminDonationBox"
+    ].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add("hidden");
+    });
+
+    // 🧹 Clear messages (optional but clean)
+    document.getElementById("loginMsg").innerHTML = "";
+    document.getElementById("registerMsg").innerHTML = "";
+
+    //  Show only the main choice buttons
+    document.getElementById("choiceBox").classList.remove("hidden");
+}
+
+function loadAllDonations() {
+    fetch("http://127.0.0.1:8000/api/admin/donations/")
+    .then(res => res.json())
+    .then(data => {
+        const tbody = document.getElementById("adminDonationTable");
+        tbody.innerHTML = "";
+
+        if (data.donations.length === 0) {
+            tbody.innerHTML =
+                `<tr><td colspan="5">No donations found</td></tr>`;
+        }
+
+        data.donations.forEach(d => {
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+                <td>
+                    <a href="#" onclick="viewUserDonations(${d.user_id})">
+                        ${d.user_name}
+                    </a>
+                </td>
+                <td>${d.user_email}</td>
+                <td>₹${d.amount}</td>
+                <td>${d.status}</td>
+                <td>${d.date}</td>
+            `;
+
+            tbody.appendChild(row);
+        });
+
+        document.getElementById("adminDonationBox").classList.remove("hidden");
+        document.getElementById("adminUsersBox").classList.add("hidden");
+    })
+    .catch(err => {
+        console.error("Donation load error:", err);
+    });
+}
+
+function viewUserDonations(userId) {
+    fetch(`http://127.0.0.1:8000/api/donations/${userId}/`)
+    .then(res => res.json())
+    .then(data => {
+
+        if (data.donations.length === 0) {
+            alert("No donations found for this user.");
+            return;
+        }
+
+        alert(
+            "Donations by user:\n\n" +
+            data.donations.map(d =>
+                `₹${d.amount} | ${d.status} | ${d.date}`
+            ).join("\n")
+        );
+    })
+    .catch(err => {
+        console.error("User donation fetch error:", err);
+    });
+}
+
+function loadUsers() {
+    fetch("http://127.0.0.1:8000/api/admin/users/")
+    .then(res => res.json())
+    .then(data => {
+        const tbody = document.getElementById("adminUsersTable");
+        tbody.innerHTML = "";
+
+        data.users.forEach(u => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${u.name}</td>
+                <td>${u.email}</td>
+                <td>
+                    <button class="secondary" onclick="viewUserDonations(${u.user_id})">
+                        View Donations
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+
+        document.getElementById("adminUsersBox").classList.remove("hidden");
+    });
+}
+function viewUserDonations(userId) {
+    fetch(`http://127.0.0.1:8000/api/donations/${userId}/`)
+    .then(res => res.json())
+    .then(data => {
+        if (data.donations.length === 0) {
+            alert("No donations found for this user.");
+            return;
+        }
+
+        alert(
+            "Donations by user:\n\n" +
+            data.donations.map(d =>
+                `₹${d.amount} | ${d.status} | ${d.date}`
+            ).join("\n")
+        );
+    })
+    .catch(err => {
+        console.error("User donation fetch error:", err);
+    });
+}
+function payWithRazorpay() {
+    fetch("http://127.0.0.1:8000/api/payment/razorpay/create/", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            donation_id: donationId,
+            amount: document.getElementById("amount").value
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        const options = {
+            key: data.key,
+            amount: document.getElementById("amount").value * 100,
+            currency: "INR",
+            name: "NSS Donation System",
+            description: "Test Donation",
+            order_id: data.order_id,
+
+            handler: function (response) {
+                // ✅ REAL payment success (sandbox)
+                updatePayment("SUCCESS");
+
+                document.getElementById("paymentMsg").innerHTML =
+                    "<span class='success'>Payment Successful</span>";
+            },
+
+            theme: {
+                color: "#1976d2"
+            }
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.open();
+    });
+}
+
+</script>
+</div>
+</body>
+</html>
